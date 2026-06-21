@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>濃度計算機</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 36px 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+
+    .field label .var {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .var-x { background: #4299e1; }
+    .var-y { background: #48bb78; }
+    .var-z { background: #ed8936; }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .input-row:focus-within {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+    }
+
+    .input-row.result {
+      background: #f7fafc;
+      border-color: #e2e8f0;
+    }
+
+    .input-row input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 11px 14px;
+      font-size: 1.05rem;
+      background: transparent;
+      color: #1a202c;
+      min-width: 0;
+    }
+
+    .input-row input:disabled {
+      color: #2d3748;
+      font-weight: 600;
+    }
+
+    .input-row .unit {
+      padding: 11px 14px;
+      font-size: 0.85rem;
+      color: #718096;
+      background: #f7fafc;
+      border-left: 1.5px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .solve-for {
+      margin-bottom: 24px;
+    }
+
+    .solve-for p {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 9px 4px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #718096;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .toggle-btn:hover { border-color: #a0aec0; color: #2d3748; }
+
+    .toggle-btn.active-x { border-color: #4299e1; background: #ebf8ff; color: #2b6cb0; }
+    .toggle-btn.active-y { border-color: #48bb78; background: #f0fff4; color: #276749; }
+    .toggle-btn.active-z { border-color: #ed8936; background: #fffaf0; color: #c05621; }
+
+    .formula-box {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #718096;
+      line-height: 1.7;
+    }
+
+    .formula-box strong {
+      color: #4a5568;
+    }
+
+    .result-label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      background: #667eea;
+      border-radius: 4px;
+      padding: 1px 7px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>濃度計算機</h1>
+  <p class="subtitle">
+    3つの値のうち、求めたいものを選んでください。<br>
+    残り2つを入力すると自動で計算されます。
+  </p>
+
+  <div class="solve-for">
+    <p>求める値：</p>
+    <div class="toggle-group">
+      <button class="toggle-btn" id="btn-x" onclick="setSolveFor('x')">
+        <span class="var var-x" style="display:inline-flex;width:18px;height:18px;font-size:0.72rem;border-radius:50%;align-items:center;justify-content:center;color:#fff;background:#4299e1;margin-right:4px;">X</span>
+        水の量
+      </button>
+      <button class="toggle-btn" id="btn-y" onclick="setSolveFor('y')">
+        <span class="var var-y" style="display:inline-flex;width:18px;height:18px;font-size:0.72rem;border-radius:50%;align-items:center;justify-content:center;color:#fff;background:#48bb78;margin-right:4px;">Y</span>
+        濃度
+      </button>
+      <button class="toggle-btn active-z" id="btn-z" onclick="setSolveFor('z')">
+        <span class="var var-z" style="display:inline-flex;width:18px;height:18px;font-size:0.72rem;border-radius:50%;align-items:center;justify-content:center;color:#fff;background:#ed8936;margin-right:4px;">Z</span>
+        食材量
+      </button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>
+      <span class="var var-x">X</span>
+      水の量
+    </label>
+    <div class="input-row" id="row-x">
+      <input type="number" id="input-x" min="0" step="any" placeholder="例: 1.5" oninput="calculate()">
+      <span class="unit">リットル</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>
+      <span class="var var-y">Y</span>
+      濃度
+    </label>
+    <div class="input-row" id="row-y">
+      <input type="number" id="input-y" min="0" max="100" step="any" placeholder="例: 2" oninput="calculate()">
+      <span class="unit">%</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>
+      <span class="var var-z">Z</span>
+      食材の量
+    </label>
+    <span class="result-label" id="result-label" style="display:none;">計算結果</span>
+    <div class="input-row result" id="row-z">
+      <input type="number" id="input-z" min="0" step="any" placeholder="例: 30" oninput="calculate()">
+      <span class="unit">グラム</span>
+    </div>
+  </div>
+
+  <div class="formula-box" id="formula-box">
+    <strong>計算式：</strong><br>
+    濃度(%) = 食材(g) ÷ (水(g) + 食材(g)) × 100<br>
+    ※ 水 1リットル = 1000グラムとして計算
+  </div>
+</div>
+
+<script>
+  let solveFor = 'z';
+
+  function setSolveFor(target) {
+    solveFor = target;
+
+    ['x','y','z'].forEach(v => {
+      const btn = document.getElementById('btn-' + v);
+      btn.className = 'toggle-btn' + (v === target ? ' active-' + v : '');
+
+      const input = document.getElementById('input-' + v);
+      const row = document.getElementById('row-' + v);
+      input.disabled = (v === target);
+      input.value = '';
+
+      if (v === target) {
+        row.classList.add('result');
+      } else {
+        row.classList.remove('result');
+      }
+    });
+
+    const label = document.getElementById('result-label');
+
+    // Show "計算結果" badge next to the result field
+    document.querySelectorAll('.result-label').forEach(el => el.style.display = 'none');
+    label.style.display = 'none';
+
+    // Re-attach label to the correct field
+    const targetField = document.getElementById('row-' + target).parentElement;
+    const existingLabel = targetField.querySelector('.result-label');
+    if (existingLabel) existingLabel.style.display = 'inline-block';
+
+    // Update placeholder
+    const placeholders = { x: '計算されます', y: '計算されます', z: '計算されます' };
+    document.getElementById('input-' + target).placeholder = '計算されます';
+
+    calculate();
+  }
+
+  function calculate() {
+    const xEl = document.getElementById('input-x');
+    const yEl = document.getElementById('input-y');
+    const zEl = document.getElementById('input-z');
+
+    const getVal = el => el.disabled ? null : (el.value === '' ? null : parseFloat(el.value));
+
+    const x = getVal(xEl); // liters
+    const y = getVal(yEl); // percent
+    const z = getVal(zEl); // grams
+
+    const resultEl = document.getElementById('input-' + solveFor);
+
+    if (solveFor === 'z') {
+      if (x === null || y === null || x < 0 || y < 0 || y >= 100) {
+        resultEl.value = '';
+        return;
+      }
+      // Z = X*1000 * Y / (100 - Y)
+      const result = (x * 1000 * y) / (100 - y);
+      resultEl.value = round(result);
+
+    } else if (solveFor === 'x') {
+      if (y === null || z === null || y <= 0 || y >= 100 || z < 0) {
+        resultEl.value = '';
+        return;
+      }
+      // X = Z*(100-Y) / (Y*1000)
+      const result = (z * (100 - y)) / (y * 1000);
+      resultEl.value = round(result);
+
+    } else if (solveFor === 'y') {
+      if (x === null || z === null || x <= 0 || z < 0) {
+        resultEl.value = '';
+        return;
+      }
+      // Y = Z / (X*1000 + Z) * 100
+      const result = z / (x * 1000 + z) * 100;
+      resultEl.value = round(result);
+    }
+  }
+
+  function round(val) {
+    if (!isFinite(val) || isNaN(val)) return '';
+    // Up to 4 significant digits, trim trailing zeros
+    return parseFloat(val.toPrecision(4));
+  }
+
+  // Initialize
+  setSolveFor('z');
+</script>
+</body>
+</html>
