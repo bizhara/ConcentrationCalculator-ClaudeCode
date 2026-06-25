@@ -6,3 +6,5 @@
 上記をブラウザで利用できるウェブアプリとして URL がわかれば動かせるようにする方法も教えてほしい。
 
 公開 URL: https://bizhara.github.io/ConcentrationCalculator-ClaudeCode/
+
+<img width="485" height="680" alt="スクリーンショット 2026-06-25 21 13 12" src="https://github.com/user-attachments/assets/6aca40b4-a88a-4b4e-b970-a6fcf32bb3da" />
